@@ -22,13 +22,19 @@ var RTCSessionDescription =
     window.mozRTCSessionDescription ||
     window.webkitRTCSessionDescription
 /**
- * @typedef RTCPeerConnection
+ * @typedef RTCConfiguration
  * @see http://www.w3.org/TR/webrtc/#idl-def-RTCConfiguration
  */
 var RTCConfiguration = {
   iceServers: [
-    { url: 'stun:23.21.150.121' }, // Amazon
-    { url: 'stun:stun.l.google.com:19302'}
+    { // Amazon
+      /** @deprecated replaced by `urls` */
+      url: 'stun:23.21.150.121',
+      urls: 'stun:23.21.150.121'
+    }, {
+      url: 'stun:stun.l.google.com:19302',
+      urls: 'stun:stun.l.google.com:19302'
+    }
   ],
   iceTransports: 'all', // none relay all
   peerIdentity: null
