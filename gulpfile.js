@@ -1,9 +1,10 @@
 /* global __dirname */
 'use strict';
 var gulp = require('gulp')
+var uglify = require('gulp-uglify')
 var browserify = require('browserify')
 var karma = require('karma')
-var kbg = require('karma-background')
+var buffer = require('vinyl-buffer')
 var source = require('vinyl-source-stream')
 var watchify = require('watchify')
 
@@ -14,8 +15,13 @@ var destFile = 'paradone.js'
 // var dest = destPath + destFile
 var karmaConf = __dirname + '/karma.conf.js'
 
-gulp.task('default', ['test-watch'], function() {
-  return gulp.src('')
+gulp.task('default', function() {
+  console.info('usage: npm run <command>\n' +
+               '       gulp <command>\n\n' +
+               '  build   Concatenate and minify the script\n' +
+               '  debug   Auto-build on save with source-map\n' +
+               '  test    Run the tests on the source files\n' +
+               '  watch   Run tests on file change\n')
 })
 
 gulp.task('build', function() {
@@ -26,10 +32,12 @@ gulp.task('build', function() {
     baseDir: sources
   }).bundle()
     .pipe(source(destFile))
+    .pipe(buffer())
+    .pipe(uglify())
     .pipe(gulp.dest(destPath))
 })
 
-gulp.task('watch', function() {
+gulp.task('debug', function() {
   var opts = watchify.args
   opts.fullPaths = false
   opts.baseDir = sources
@@ -47,27 +55,22 @@ gulp.task('watch', function() {
 })
 
 /**
- * Initiate
+ * Run the test once the existing Karma server
  */
 gulp.task('test', function(done) {
   karma.server.start({
-    port: 9876,
-    configFile: karmaConf
+    configFile: karmaConf,
+    port: 9877,
+    autoWatch: false,
+    singleRun: true
   }, done)
 })
 
 /**
- * Start Karma Server in background. We need to get the prompt back if we want
- * to finish the task. kbg creates a sub child process before starting the
- * server
+ * Watch source files and test modifications on file save.
  */
-gulp.task('karma-start', function() {
-  kbg({ configFile: karmaConf })
-})
-
-/**
- * Run the test on the existing Karma server
- */
-gulp.task('karma-run', function(done) {
-  karma.runner.run({ port: 9876 }, done)
+gulp.task('watch', function(done) {
+  karma.server.start({
+    configFile: karmaConf
+  }, done)
 })

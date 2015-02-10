@@ -1,6 +1,10 @@
 /* @flow weak */
 'use strict';
 
+/**
+ * Wrapper setting handlers of a RTCDatachannel from a given PeerConnection
+ * @module
+ */
 module.exports = {
   options: {
     optional: [
@@ -14,9 +18,11 @@ module.exports = {
    * callbacks needed to forward events to the Peer and PeerConnection objects
    * (like a connection/disconnection, error and reception of messages)
    *
-   * @param peer {Peer} instance of Peer object the events must be forwarded to
-   * @param peerConnection {PeerConnection} instance of the PeerConnection where
-   * the DataChannel will be stored @param id Id of the remote peer
+   * @param {Peer} peer - Events will be forwarded to this Peer
+   * @param {PeerConnection} peerConnection - PeerConnection where the
+   *                                          DataChannel will be stored
+   * @param {string} id - Id of the remote peer
+   *
    * @return DataChannel
    */
   create: function(peer, peerConnection, remotePeer) {
@@ -28,11 +34,11 @@ module.exports = {
   /**
    * Set all the callbacks of a newly created DataChannel
    *
-   * @param channel {RTCDataChannel} Channel to be configured
-   * @param peer {Peer} instance of Peer object the events must be forwarded to
-   * @param peerConnection {PeerConnection} instance of the PeerConnection where
-   * the DataChannel will be stored
-   * @param id {string} Id of the remote peer
+   * @param {RTCDataChannel} channel - Channel to be configured
+   * @param {Peer} peer - Events must be forwarded to this Peer
+   * @param {PeerConnection} peerConnection - PeerConnection where the
+   *                                          DataChannel will be stored
+   * @param {string} id - Id of the remote peer
    * @return DataChannel
    */
   setHandlers: function(channel, peer, peerConnection, remotePeer) {
@@ -49,9 +55,8 @@ module.exports = {
    * onmessage handler. This allows us to handle data recevied through both the
    * signaling system and the mesh network with the same functions
    *
-   * @param peer {Peer} Instance of the Peer object the message must be
-   * forwarded to
-   * @param event {Event} Contains the message sent by the remote peer
+   * @param {Peer} peer - Messages will be forwarded to this Peer
+   * @param {Event} event - Contains the message sent by the remote peer
    */
   onmessage: function(peer, event) {
     var message = JSON.parse(event.data)

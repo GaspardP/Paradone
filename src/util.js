@@ -3,7 +3,7 @@
 module.exports = {
   /**
    * Special wrapping for promise related errors with line number
-   * @param e {Error} contains detailed information on the error
+   * @param {Error} e - Contains detailed information on the error
    */
   error: function(e) {
     return function(err) {
@@ -37,6 +37,8 @@ module.exports = {
 
   /**
    * Shuffle an array
+   * @param {Array} array
+   * @param {Array} Same array xith its elements shuffled
    */
   shuffleArray: function(array) {
     var i, j, temp

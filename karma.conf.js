@@ -47,11 +47,15 @@ module.exports = function(config) {
 
     // enable / disable watching file and executing tests whenever any file
     // changes
-    autoWatch: true, //true,
+    autoWatch: true,
+
+    // Tells Karma how long to wait (in milliseconds) after any changes have
+    // occurred before starting the test process again.
+    autoWatchBatchDelay: 1000,
 
     // start these browsers. available browser launchers:
     // https://npmjs.org/browse/keyword/karma-launcher
-    browsers: ['ChromeCanary', 'FirefoxDeveloperEdition'],
+    browsers: ['ChromeCanary'],
 
     // Continuous Integration mode
     // if true, Karma captures browsers, runs the tests and exits

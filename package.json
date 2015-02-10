@@ -7,8 +7,10 @@
   "main": "src/main.js",
   "scripts": {
     "build": "./node_modules/.bin/gulp build",
-    "test": "./node_modules/.bin/gulp test",
     "clean": "find . -type f -name \"#*#\" -o -name \"*~\" -delete;",
+    "debug": "./node_modules/.bin/gulp debug",
+    "doc": "./node_modules/.bin/jsdoc -P ./package.json -d ./doc src/*.js",
+    "test": "./node_modules/.bin/gulp test",
     "watch": "./node_modules/.bin/gulp watch"
   },
   "dependencies": {
@@ -21,17 +23,19 @@
     "gulp": "^3.8.10",
     "gulp-concat": "^2.4.2",
     "gulp-strip-line": "0.0.1",
+    "gulp-uglify": "^1.1.0",
+    "jsdoc": "^3.3.0-beta1",
     "karma": "^0.12.24",
-    "karma-background": "0.0.1",
     "karma-browserify": "^3.0.1",
     "karma-chai": "^0.1.0",
     "karma-chrome-launcher": "^0.1.5",
     "karma-coverage": "^0.2.6",
-    "karma-firefox-launcher": "^0.1.3",
+    "karma-firefox-launcher": "^0.1.4",
     "karma-mocha": "^0.1.9",
     "karma-mocha-reporter": "^0.3.1",
     "karma-notify-reporter": "^0.1.1",
     "karma-sinon": "^1.0.3",
+    "vinyl-buffer": "^1.0.0",
     "vinyl-source-stream": "^1.0.0",
     "watchify": "^2.1.1"
   }

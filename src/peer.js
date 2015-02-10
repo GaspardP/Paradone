@@ -6,22 +6,41 @@ var Signal = require('./signal.js')
 var PeerConnection = require('./peerConnection.js')
 var util = require('./util.js')
 var EventEmitter = require('eventemitter3')
-
 module.exports = Peer
 
+/**
+ * @typedef RTCIceCandidate
+ * @see https://w3c.github.io/webrtc-pc/#rtcicecandidate-type
+ */
 var RTCIceCandidate =
     window.RTCIceCandidate ||
     window.mozRTCIceCandidate
+/**
+ * @typedef RTCSessionDescription
+ * @see https://w3c.github.io/webrtc-pc/#rtcsessiondescription-class
+ */
 var RTCSessionDescription =
     window.RTCSessionDescription ||
     window.mozRTCSessionDescription ||
     window.webkitRTCSessionDescription
 
 /**
- * A peer holds the information for connections with the mesh, and info about
- * possessed files
+ * @class A peer holds the information for connections with the mesh, and info
+ *        about possessed files. It communicates with other peers through a
+ *        messaging system. Local objects can subscribe to message event with
+ *        the `on`function and send messages with the `emit` function.
  *
  * @constructor
+ * @param {Object} [opts] - Configuration options
+ *
+ * @property {Media} files - Map of files indexed by url
+ * @property {string} id - Id of the peer
+ * @property {Map.<PeerConnection>} connections - Connections
+ *           indexed
+ *                                                         by remote peer id
+ * @property {Map.<Set.<RTCIceCandidate>>} icecandidates - Store ICECandidates
+ *                                                          for a connection if
+ *                                                          it's not active yet
  */
 function Peer(opts) {
   if(!(this instanceof Peer)) {
@@ -41,9 +60,7 @@ function Peer(opts) {
   this.id = signal.getId() // Get id
 
   // Will hold the peers when a connection is created
-  /** Map<PeerConnection> */
   this.connections = new Map()
-  /** Map<Set<RTCICE>> */
   this.icecandidates = new Map()
 
   this.connections.set('signal', signal)
@@ -73,8 +90,11 @@ Peer.prototype = Object.create(EventEmitter.prototype)
 
 /**
  * Set a new media we need to leech
- * @param src Id for the fie
- * @param tag HTML Element where the media should be played
+ *
+ * @param {string} src - URL for the fie
+ * @param {HTMLMediaElement} tag - HTML Element where the media should be played
+ * @param {boolean} autoload - Whether or not the file should be played when the
+ *                          download is over
  */
 Peer.prototype.addMedia = function(src, tag, autoload) {
   if(!this.files.has(src)) {
@@ -98,7 +118,7 @@ Peer.prototype.addMedia = function(src, tag, autoload) {
  * Two solutions : The peer has the recipient as neighbour or we need to
  * broadcast the message.
  *
- * @param message {Message} information to be sent
+ * @param {Message} message - information to be sent
  */
 Peer.prototype.send = function(message) {
   // TODO Validate message construction
@@ -145,7 +165,7 @@ Peer.prototype.send = function(message) {
 
 /**
  * Send a new request for peers to everyone
- * @param url {String} Id for the file
+ * @param {String} url - Id for the file
  */
 Peer.prototype.requestSeed = function(url) {
   this.send({
@@ -161,8 +181,8 @@ Peer.prototype.requestSeed = function(url) {
 
 /**
  * Extract ids and url information to define an answer message
- * @param message {Message} Original message
- * @param answer {Object} Values (like data and type) to be sent
+ * @param {Message} message - Original message
+ * @param {Object} answer - Values (like data and type) to be sent
  */
 Peer.prototype.respondTo = function(message, answer) {
   answer.from = this.id
@@ -176,7 +196,7 @@ Peer.prototype.respondTo = function(message, answer) {
 /**
  * When the node receives a message for someone else it decrease the ttl by one
  * and forwards it
- * @param message {Message} message to be forwarded
+ * @param {Message} message - message to be forwarded
  */
 Peer.prototype.forward = function(message) {
   message.ttl -= 1
@@ -188,35 +208,35 @@ Peer.prototype.forward = function(message) {
  * Return the next part a peer should ask based on the metadata of a media and
  * the already downloaded parts.
  *
- * @param media {Media} Media file from which the peer possesses at-least the
- * meta-data
- * @param nbParts {integer} number of parts to be returned
+ * @param {Media} media - Media file from which the peer possesses at-least the
+ *                        meta-data
+ * @param {number} nbParts - number of parts to be returned
  */
 Peer.prototype.askForNextParts = function(media, nbParts) {
-  var partInfo = media.nextPartsToDownload(nbParts)
-  var sendRequest = function(info) {
-    var remote = info[0]
-    var partNumber = info[1]
-    console.info('Asking for part', partNumber, 'to peer', remote)
-    this.send({
-      type: 'request',
-      from: this.id,
-      to: remote,
-      url: media.url,
-      ttl: 3,
-      forwardBy: [],
-      data: 'part',
-      number: partNumber
-    })
-    media.pendingParts.push(partNumber)
-  }
-
-  partInfo.forEach(sendRequest, this)
+  media.nextPartsToDownload(nbParts)
+    .forEach(function sendRequest(info) {
+      var remote = info[0]
+      var partNumber = info[1]
+      console.info('Asking for part', partNumber, 'to peer', remote)
+      this.send({
+        type: 'request',
+        from: this.id,
+        to: remote,
+        url: media.url,
+        ttl: 3,
+        forwardBy: [],
+        data: 'part',
+        number: partNumber
+      })
+      media.pendingParts.push(partNumber)
+    }, this)
 }
 
 /**
  * Handle when the channel is openned
- * @param remotePeer {string}
+ *
+ * @event Peer#onconnected
+ * @param {string} remotePeer - Id of the remote peer we just connected to
  */
 var onconnected = function(remotePeer) {
   // We want to know which files the neighbour has
@@ -235,14 +255,27 @@ var onconnected = function(remotePeer) {
   }, this)
 }
 
-/** Handle when connection (channel) to a peer is closed */
+/**
+ * Handle when connection (channel) to a peer is closed
+ *
+ * @event Peer#ondisconnected
+ * @param {string} remotePeer - Id of the peer that disconnected
+ * @param {Event} event - information about the disconnection
+ */
 var ondisconnected = function(remotePeer, event) {
   return remotePeer || event // TODO?
 }
 
 /**
- * Last part of the connecion establishement, set remote description on local
- * node.
+ * Handle an answer type response, the last part of the connecion
+ * establishement. Set the remote description on local node. Once the connection
+ * will be established, the datachannel event should be triggered indicating
+ * that the connexion can be used to send messages.
+ *
+ * @event Peer#onanswer
+ * @param {Message} message - An answer containing the remote SDP
+ * Description
+ *                            needed to set up the connection
  */
 var onanswer = function(message) {
   //TODO Move logic to peerConection
@@ -267,6 +300,9 @@ var onanswer = function(message) {
 /**
  * Remote ICECandidates have to be added to the corresponding peerConnection. If
  * the connection is not established yet, we store the data.
+ *
+ * @event Peer#onicecandidate
+ * @param {Message} message - an icecandidate type message
  */
 var onicecandidate = function(message) {
   var candidate = new RTCIceCandidate(message.data)
@@ -291,6 +327,10 @@ var onicecandidate = function(message) {
 /**
  * Store the information of the file and updates the information on the
  * mediafile
+ *
+ * @event Peer#oninfo
+ * @param {Message} message - An info type message containing meta-data about
+ *                            the media file the node needs
  */
 var oninfo = function(message) {
   var info = message.data
@@ -310,14 +350,16 @@ var oninfo = function(message) {
 }
 
 /**
- * Respond to an offer message with a SDPAnswer
+ * Extract the SDPOffer from the received message and respond with a SDPAnswer
  *
- * @param message {Message} Type:offer with remote peer's SDPOffer
+ * @event Peer#onoffer
+ * @param {Message} message - An offer type message containing the remote peer's
+ *                            SDPOffer
  */
 var onoffer = function(message) {
   var remotePeer = message.from
   var remoteSDP = message.data
-  var peerConnection = new PeerConnection(this, this.id, remotePeer)
+  var peerConnection = new PeerConnection(this, remotePeer)
   /** Add ICE Candidates if they exist */
   var addIceCandidate = function(remotePeer, peerConnection) {
     if(this.icecandidates.has(remotePeer)) {
@@ -348,7 +390,10 @@ var onoffer = function(message) {
 }
 
 /**
- * Message containing desired part
+ * Message containing a part of the desired media
+ *
+ * @event Peer#onpart
+ * @param {Message} message - A part type message containing a chunk of media
  */
 var onpart = function(message) {
   console.assert(
@@ -367,10 +412,14 @@ var onpart = function(message) {
 }
 
 /**
- * Dispatch a request message depending on is type. This function should not be
- * overloaded.
+ * Dispatch a request message depending on is type.
+ *
+ * @event Peer#onrequest
+ * @private
+ * @param {Message} message - A request type message
  */
 var onrequest = function(message) {
+  // TODO Split requests to allow subscription with the `on` function
   // TODO Check URL or forward
   var kind = message.data
   var requestKinds = {
@@ -389,6 +438,9 @@ var onrequest = function(message) {
 /**
  * The remote peer want our mediafile
  * The node begin the connection
+ *
+ * @event Peer#onrequestpeer
+ * @param {Message} message - A request for a new connection
  */
 var onrequestpeer = function(message) {
   // TODO Check we don't already have the connection
@@ -398,13 +450,13 @@ var onrequestpeer = function(message) {
     return
   }
 
-  var peerConnection = new PeerConnection(this, this.id, message.from)
+  var peerConnection = new PeerConnection(this, message.from)
   var sendOffer = function(message, offer) {
     this.respondTo(message, { type: 'offer', data: offer })
   }
 
   // Setup the communication channel only on one side
-  peerConnection.createChannel(this)
+  peerConnection.createChannel()
   // Send the SDP Offer once the connection is created
   peerConnection.createSDPOffer(sendOffer.bind(this, message))
   // Save the new connexion
@@ -416,6 +468,9 @@ var onrequestpeer = function(message) {
 /**
  * The remote node request the info of a file (size, number of parts). We return
  * this information and the local parts we have in case he is interested
+ *
+ * @event Peer#onrequestinfo
+ * @param {Message} message - A request for information about a media
  */
 var onrequestinfo = function(message) {
   if(this.files.has(message.url) &&
@@ -430,6 +485,9 @@ var onrequestinfo = function(message) {
 /**
  * The remote peer requests some file part
  * We need to check if we have them and then we can send them
+ *
+ * @event Peer#onrequestpart
+ * @param {Message} message - A request for a chunk of a media
  */
 var onrequestpart = function(message) {
   var sendChunks = (function(chunk) {

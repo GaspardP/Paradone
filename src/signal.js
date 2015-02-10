@@ -5,10 +5,11 @@ var Firebase = require('firebase')
 module.exports = Signal
 
 /**
- * Connection to the signal server
- * Should ask for an id
+ * @class Connection to the signal server with the Firebase module
+ *
  * @constructor
- * @param peer {Peer}
+ * @param {Peer} peer - Messages will be forwarded to this peer
+ * @param {Object} opts - Connection options for Firebase (url, credentials)
  */
 function Signal(peer, opts) {
   this.id = String(Date.now()) + String(Math.random()).slice(1, 6)
@@ -23,13 +24,20 @@ function Signal(peer, opts) {
 }
 
 /**
+ * @return {string} Id of the peer
+ */
+Signal.prototype.getId = function() {
+  return this.id
+}
+
+/**
  * Use the signal server to transmit a message.
  * Two modification need to be done to the message:
  * - The ttl will be set to 0 to prevent forwarding redundancy after the
  *   Firebase broadcast
  * - The message data will be transformed to a JSON String
  *
- * @param message {Message} message to be sent on the mesh
+ * @param {Message} message -  message to be sent on the mesh
  */
 Signal.prototype.send = function(message) {
   message.ttl = 0
@@ -40,9 +48,10 @@ Signal.prototype.send = function(message) {
 /**
  * Defines the callback handling new messages received from the sigbal server
  *
- * @param firebase {Firebase}
- * @param id {string} Id of the peer
- * @param peer {Peer} instance of Peer object messages should be sent to
+ * @private
+ * @param {Firebase} firebase
+ * @param {string} id -  Id of the peer
+ * @param {Peer} peer -  instance of Peer object messages should be sent to
  */
 var setOnMessage = function(firebase, id, peer) {
   firebase.on('child_added', function(snapshot) {
@@ -58,11 +67,4 @@ var setOnMessage = function(firebase, id, peer) {
       peer.emit(message.type, message)
     }
   })
-}
-
-/**
- * @return {string} Id of the peer
- */
-Signal.prototype.getId = function() {
-  return this.id
 }
