@@ -159,7 +159,6 @@ function PeerConnection(peer, remotePeer) {
       peer,
       pc,
       remotePeer)
-    peer.emit('connected', remotePeer)
   }
 
   // Supercharged RTCPeerConnection
