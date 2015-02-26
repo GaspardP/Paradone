@@ -38,8 +38,7 @@ describe('Peer', function() {
       var testParams = [
         ['should be from A', 'from', peerA.id],
         ['should be for everyone', 'to', -1],
-        ['should be a request', 'type', 'request'],
-        ['should be a peer request', 'data', 'peer'],
+        ['should be a request', 'type', 'request-peer'],
         ['should not been forwarded', 'forwardBy', []],
         ['should have the correct url', 'url', url],
         ['should have default ttl', 'ttl', 3]
@@ -209,12 +208,11 @@ describe('Peer', function() {
         peerC.connections.delete('signal')
 
         var requestFromB = {
-          type: 'request',
+          type: 'request-peer',
           from: peerB.id,
           to: -1,
           url: url,
           ttl: 3,
-          data: 'peer',
           forwardBy: []
         }
 
@@ -231,8 +229,8 @@ describe('Peer', function() {
         })
 
         // Send peer request from B to A and C
-        peerA.emit('request', requestFromB)
-        peerC.emit('request', requestFromB)
+        peerA.emit('request-peer', requestFromB)
+        peerC.emit('request-peer', requestFromB)
 
         // Wait for connection to be established
         peerB.on('connected', function() {
@@ -296,21 +294,19 @@ describe('Peer', function() {
         peerC.connections.delete('signal')
 
         var requestFromB = {
-          type: 'request',
+          type: 'request-peer',
           from: peerB.id,
           to: -1,
           url: url,
           ttl: 3,
-          data: 'peer',
           forwardBy: []
         }
         var requestFromC = {
-          type: 'request',
+          type: 'request-peer',
           from: peerC.id,
           to: -1,
           url: url,
           ttl: 3,
-          data: 'peer',
           forwardBy: []
         }
 
@@ -326,9 +322,9 @@ describe('Peer', function() {
 
         peerB.on('connected', function self() {
           // Wait for connection with A to be established
-          peerA.emit('request', requestFromC)
+          peerA.emit('request-peer', requestFromC)
           console.log('onconnected B')
-          peerB.emit('request', requestFromC)
+          peerB.emit('request-peer', requestFromC)
           peerB.removeListener('connected', self)
         })
 
@@ -345,7 +341,7 @@ describe('Peer', function() {
         })
 
         // Connect A and B
-        peerA.emit('request', requestFromB)
+        peerA.emit('request-peer', requestFromB)
       })
 
       describe('C should be connected', function() {

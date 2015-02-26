@@ -35,12 +35,10 @@ var RTCSessionDescription =
  *
  * @property {Media} files - Map of files indexed by url
  * @property {string} id - Id of the peer
- * @property {Map.<PeerConnection>} connections - Connections
- *           indexed
- *                                                         by remote peer id
+ * @property {Map.<PeerConnection>} connections - Connections indexed by remote
+ *            peer id
  * @property {Map.<Set.<RTCIceCandidate>>} icecandidates - Store ICECandidates
- *                                                          for a connection if
- *                                                          it's not active yet
+ *           for a connection if it's not active yet
  */
 function Peer(opts) {
   if(!(this instanceof Peer)) {
@@ -74,7 +72,9 @@ function Peer(opts) {
   this.on('offer', onoffer)
   this.on('answer', onanswer)
   this.on('icecandidate', onicecandidate)
-  this.on('request', onrequest)
+  this.on('request-info', onrequestinfo)
+  this.on('request-part', onrequestpart)
+  this.on('request-peer', onrequestpeer)
 
   this.on('connected', onconnected)
   this.on('disconnected', ondisconnected)
@@ -94,7 +94,7 @@ Peer.prototype = Object.create(EventEmitter.prototype)
  * @param {string} src - URL for the fie
  * @param {HTMLMediaElement} tag - HTML Element where the media should be played
  * @param {boolean} autoload - Whether or not the file should be played when the
- *                          download is over
+ *        download is over
  */
 Peer.prototype.addMedia = function(src, tag, autoload) {
   if(!this.files.has(src)) {
@@ -115,7 +115,7 @@ Peer.prototype.addMedia = function(src, tag, autoload) {
 
 /**
  * Use the connections to send a message to a remote peer.
- * Two solutions : The peer has the recipient as neighbour or we need to
+ * Two solutions: The peer has the recipient as neighbour or we need to
  * broadcast the message.
  *
  * @param {Message} message - information to be sent
@@ -169,12 +169,11 @@ Peer.prototype.send = function(message) {
  */
 Peer.prototype.requestSeed = function(url) {
   this.send({
-    type: 'request',
+    type: 'request-peer',
     from: this.id,
     to: -1,
     url: url,
     ttl: 3,
-    data: 'peer',
     forwardBy: []
   })
 }
@@ -219,13 +218,12 @@ Peer.prototype.askForNextParts = function(media, nbParts) {
       var partNumber = info[1]
       console.info('Asking for part', partNumber, 'to peer', remote)
       this.send({
-        type: 'request',
+        type: 'request-part',
         from: this.id,
         to: remote,
         url: media.url,
         ttl: 3,
         forwardBy: [],
-        data: 'part',
         number: partNumber
       })
       media.pendingParts.push(partNumber)
@@ -244,12 +242,11 @@ var onconnected = function(remotePeer) {
     if(!file.complete) {
       console.info('Asking for media info', file.url, 'to remote', remotePeer)
       this.connections.get(remotePeer).send({
-        type: 'request',
+        type: 'request-info',
         from: this.id,
         to: remotePeer,
         url: file.url,
-        forwardBy: [],
-        data: 'info'
+        forwardBy: []
       })
     }
   }, this)
@@ -273,9 +270,8 @@ var ondisconnected = function(remotePeer, event) {
  * that the connexion can be used to send messages.
  *
  * @event Peer#onanswer
- * @param {Message} message - An answer containing the remote SDP
- * Description
- *                            needed to set up the connection
+ * @param {Message} message - An answer containing the remote SDP Description
+ *        needed to set up the connection
  */
 var onanswer = function(message) {
   //TODO Move logic to peerConection
@@ -409,30 +405,6 @@ var onpart = function(message) {
   media.storeChunk(message.number, new Uint8Array(message.data))
   // Ask for a new part
   this.askForNextParts(media, 1)
-}
-
-/**
- * Dispatch a request message depending on is type.
- *
- * @event Peer#onrequest
- * @private
- * @param {Message} message - A request type message
- */
-var onrequest = function(message) {
-  // TODO Split requests to allow subscription with the `on` function
-  // TODO Check URL or forward
-  var kind = message.data
-  var requestKinds = {
-    info: onrequestinfo,
-    part: onrequestpart,
-    peer: onrequestpeer
-  }
-
-  if(!requestKinds.hasOwnProperty(kind)) {
-    throw new Error('Invalid kind of request: ' + message.data)
-  } else {
-    requestKinds[kind].call(this, message)
-  }
 }
 
 /**

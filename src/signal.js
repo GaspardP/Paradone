@@ -56,8 +56,7 @@ Signal.prototype.send = function(message) {
 var setOnMessage = function(firebase, id, peer) {
   firebase.on('child_added', function(snapshot) {
     var message = JSON.parse(snapshot.val())
-    if(message.type === 'request' &&
-       message.data === 'peer' &&
+    if(message.type === 'request-peer' &&
        message.from < id) {
       // Do not try to respond to older request messages so we don't need to
       // reset Firebase cache every time we make changes
