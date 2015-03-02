@@ -2,7 +2,7 @@
 'use strict';
 
 var Peer = require('../src/peer.js')
-var EventEmitter = require('eventemitter3')
+var MessageEmitter = require('../src/messageEmitter.js')
 
 describe('Peer', function() {
   this.timeout(5000)
@@ -10,7 +10,7 @@ describe('Peer', function() {
   describe('@constructor', function() {
     it('should be a EventEmitter', function() {
       var peer = new Peer()
-      expect(peer instanceof EventEmitter).to.be.true()
+      expect(peer instanceof MessageEmitter).to.be.true()
     })
   })
 
@@ -65,7 +65,7 @@ describe('Peer', function() {
           }
         })
         // Send the previous request to B
-        peerB.emit(messages.requestFromA.type, messages.requestFromA)
+        peerB.emit(messages.requestFromA)
       })
 
       var testParams = [
@@ -95,7 +95,7 @@ describe('Peer', function() {
           }
         })
         // Send the offer to A
-        peerA.emit(messages.offerFromB.type, messages.offerFromB)
+        peerA.emit(messages.offerFromB)
       })
 
       var testParams = [
@@ -171,10 +171,10 @@ describe('Peer', function() {
         })
         // Finish the protocol
         // Send answer to B
-        peerB.emit('answer', messages.answerFromA)
+        peerB.emit(messages.answerFromA)
         // Set IceC for both peers
-        peerA.emit('icecandidate', messages.iceFromB)
-        peerB.emit('icecandidate', messages.iceFromA)
+        peerA.emit(messages.iceFromB)
+        peerB.emit(messages.iceFromA)
       })
     })
 
@@ -218,19 +218,19 @@ describe('Peer', function() {
 
         sinon.stub(peerA, 'send', function(message) {
           console.debug('Send A')
-          peers[message.to].emit(message.type, message)
+          peers[message.to].emit(message)
         })
         sinon.stub(peerB, 'send', function(message) {
-          peers[message.to].emit(message.type, message)
+          peers[message.to].emit(message)
         })
         sinon.stub(peerC, 'send', function(message) {
           console.debug('Send C')
-          peers[message.to].emit(message.type, message)
+          peers[message.to].emit(message)
         })
 
         // Send peer request from B to A and C
-        peerA.emit('request-peer', requestFromB)
-        peerC.emit('request-peer', requestFromB)
+        peerA.emit(requestFromB)
+        peerC.emit(requestFromB)
 
         // Wait for connection to be established
         peerB.on('connected', function() {
@@ -311,20 +311,20 @@ describe('Peer', function() {
         }
 
         sinon.stub(peerA, 'send', function(message) {
-          peers[message.to].emit(message.type, message)
+          peers[message.to].emit(message)
         })
         sinon.stub(peerB, 'send', function(message) {
-          peers[message.to].emit(message.type, message)
+          peers[message.to].emit(message)
         })
         sinon.stub(peerC, 'send', function(message) {
-          peers[message.to].emit(message.type, message)
+          peers[message.to].emit(message)
         })
 
         peerB.on('connected', function self() {
           // Wait for connection with A to be established
-          peerA.emit('request-peer', requestFromC)
+          peerA.emit(requestFromC)
           console.log('onconnected B')
-          peerB.emit('request-peer', requestFromC)
+          peerB.emit(requestFromC)
           peerB.removeListener('connected', self)
         })
 
@@ -341,7 +341,7 @@ describe('Peer', function() {
         })
 
         // Connect A and B
-        peerA.emit('request-peer', requestFromB)
+        peerA.emit(requestFromB)
       })
 
       describe('C should be connected', function() {

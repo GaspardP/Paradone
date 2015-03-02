@@ -63,7 +63,7 @@ var setOnMessage = function(firebase, id, peer) {
       return
     } else if(message.from !== id &&
               (message.to === -1 || message.to === id)) {
-      peer.emit(message.type, message)
+      peer.emit(message)
     }
   })
 }

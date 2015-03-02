@@ -5,7 +5,7 @@ var Media = require('./media.js')
 var Signal = require('./signal.js')
 var PeerConnection = require('./peerConnection.js')
 var util = require('./util.js')
-var EventEmitter = require('eventemitter3')
+var MessageEmitter = require('./messageEmitter.js')
 module.exports = Peer
 
 /**
@@ -51,6 +51,9 @@ function Peer(opts) {
     opts = {}
   }
 
+  // Inheritance from EE
+  MessageEmitter.call(this)
+
   this.files = new Map()
 
   // Set signaling system
@@ -81,12 +84,9 @@ function Peer(opts) {
 
   this.on('info', oninfo)
   this.on('part', onpart)
-
-  // Inheritance from EE
-  EventEmitter.call(this)
 }
 
-Peer.prototype = Object.create(EventEmitter.prototype)
+Peer.prototype = Object.create(MessageEmitter.prototype)
 
 /**
  * Set a new media we need to leech

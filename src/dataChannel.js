@@ -61,7 +61,7 @@ module.exports = {
   onmessage: function(peer, event) {
     var message = JSON.parse(event.data)
     if(-1 === message.to || peer.id === message.to) {
-      peer.emit(message.type, message)
+      peer.emit(message)
     } else if(message.ttl > 0) {
       peer.forward(message)
     }
@@ -77,7 +77,7 @@ module.exports = {
       console.info('[dc](' + peer.id + ') Channel open with' + remotePeer)
       peerConnection.channel = channel
       peerConnection.status = 'open'
-      peer.emit('connected', remotePeer)
+      peer.emit({type:'connected', from: remotePeer, data: event})
     }
   },
 
@@ -88,7 +88,7 @@ module.exports = {
   onclose: function(peer, peerConnection, remotePeer, event) {
     console.info('[dc](' + peer.id + ') Channel closed with ' + remotePeer)
     peerConnection.status = 'close'
-    peer.emit('disconnected', remotePeer, event)
+    peer.emit({type: 'disconnected', from: remotePeer, data: event})
   },
 
   /** An error has been thrown by the DataChannel */

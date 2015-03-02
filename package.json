@@ -14,7 +14,6 @@
     "watch": "./node_modules/.bin/gulp watch"
   },
   "dependencies": {
-    "eventemitter3": "^0.1.6",
     "firebase": "1.1.2",
     "localforage": "~1.1.1"
   },
