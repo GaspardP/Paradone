@@ -1,11 +1,12 @@
-/* @flow */
-'use strict';
+/* @flow weak */
+'use strict'
 
-var Media = require('./media.js')
-var Signal = require('./signal.js')
-var PeerConnection = require('./peerConnection.js')
-var util = require('./util.js')
 var MessageEmitter = require('./messageEmitter.js')
+var PeerConnection = require('./peerConnection.js')
+var Signal = require('./signal.js')
+var util = require('./util.js')
+var extensions = require('./extensions/list.js')
+
 module.exports = Peer
 
 /**
@@ -33,7 +34,6 @@ var RTCSessionDescription =
  * @constructor
  * @param {Object} [opts] - Configuration options
  *
- * @property {Media} files - Map of files indexed by url
  * @property {string} id - Id of the peer
  * @property {Map.<PeerConnection>} connections - Connections indexed by remote
  *            peer id
@@ -46,15 +46,14 @@ function Peer(opts) {
     return new Peer(opts)
   }
 
+  MessageEmitter.call(this)
+
   if(typeof opts === 'undefined') {
     console.info('Default parameters used')
     opts = {}
+  } else {
+    extensions.apply(this, opts.extensions)
   }
-
-  // Inheritance from EE
-  MessageEmitter.call(this)
-
-  this.files = new Map()
 
   // Set signaling system
   var signal = new Signal(this, opts.signal)
@@ -66,52 +65,14 @@ function Peer(opts) {
 
   this.connections.set('signal', signal)
 
-  // Check out if there are any local files we can seed
-  Media.forEachStoredMedia((function(mediafile) {
-    this.files.set(mediafile.url, mediafile)
-  }).bind(this))
-
-  // Events
+  // Message Handlers
   this.on('offer', onoffer)
   this.on('answer', onanswer)
   this.on('icecandidate', onicecandidate)
-  this.on('request-info', onrequestinfo)
-  this.on('request-part', onrequestpart)
   this.on('request-peer', onrequestpeer)
-
-  this.on('connected', onconnected)
-  this.on('disconnected', ondisconnected)
-
-  this.on('info', oninfo)
-  this.on('part', onpart)
 }
 
 Peer.prototype = Object.create(MessageEmitter.prototype)
-
-/**
- * Set a new media we need to leech
- *
- * @param {string} src - URL for the fie
- * @param {HTMLMediaElement} tag - HTML Element where the media should be played
- * @param {boolean} autoload - Whether or not the file should be played when the
- *        download is over
- */
-Peer.prototype.addMedia = function(src, tag, autoload) {
-  if(!this.files.has(src)) {
-    // Track the file
-    var media = new Media(src, tag, autoload)
-
-    // TODO Check for the local storage?
-    this.requestSeed(src)
-
-    // If no peer give answers within 5 seconds the file will be downloaded
-    // directly from the server
-    media.startDownloadTimeout()
-
-    this.files.set(src, media)
-  }
-  // TODO Else could be a new tag for the media
-}
 
 /**
  * Use the connections to send a message to a remote peer.
@@ -123,7 +84,7 @@ Peer.prototype.addMedia = function(src, tag, autoload) {
 Peer.prototype.send = function(message) {
   // TODO Validate message construction
   var messageValidator = function(msg) {
-    var params = ['type', 'from', 'to', 'url', 'ttl', 'forwardBy', 'data']
+    var params = ['type', 'from', 'to', 'ttl', 'forwardBy']
     params.forEach(function(param) {
       if(!msg.hasOwnProperty(param) || typeof msg[param] === 'undefined') {
         throw new Error('Message#' + param + ' is missing')
@@ -167,7 +128,7 @@ Peer.prototype.send = function(message) {
  * Send a new request for peers to everyone
  * @param {String} url - Id for the file
  */
-Peer.prototype.requestSeed = function(url) {
+Peer.prototype.requestPeer = function(url) {
   this.send({
     type: 'request-peer',
     from: this.id,
@@ -201,66 +162,6 @@ Peer.prototype.forward = function(message) {
   message.ttl -= 1
   message.forwardBy.push(this.id)
   this.send(message)
-}
-
-/**
- * Return the next part a peer should ask based on the metadata of a media and
- * the already downloaded parts.
- *
- * @param {Media} media - Media file from which the peer possesses at-least the
- *                        meta-data
- * @param {number} nbParts - number of parts to be returned
- */
-Peer.prototype.askForNextParts = function(media, nbParts) {
-  media.nextPartsToDownload(nbParts)
-    .forEach(function sendRequest(info) {
-      var remote = info[0]
-      var partNumber = info[1]
-      console.info('Asking for part', partNumber, 'to peer', remote)
-      this.send({
-        type: 'request-part',
-        from: this.id,
-        to: remote,
-        url: media.url,
-        ttl: 3,
-        forwardBy: [],
-        number: partNumber
-      })
-      media.pendingParts.push(partNumber)
-    }, this)
-}
-
-/**
- * Handle when the channel is openned
- *
- * @event Peer#onconnected
- * @param {string} remotePeer - Id of the remote peer we just connected to
- */
-var onconnected = function(remotePeer) {
-  // We want to know which files the neighbour has
-  this.files.forEach(function(file) {
-    if(!file.complete) {
-      console.info('Asking for media info', file.url, 'to remote', remotePeer)
-      this.connections.get(remotePeer).send({
-        type: 'request-info',
-        from: this.id,
-        to: remotePeer,
-        url: file.url,
-        forwardBy: []
-      })
-    }
-  }, this)
-}
-
-/**
- * Handle when connection (channel) to a peer is closed
- *
- * @event Peer#ondisconnected
- * @param {string} remotePeer - Id of the peer that disconnected
- * @param {Event} event - information about the disconnection
- */
-var ondisconnected = function(remotePeer, event) {
-  return remotePeer || event // TODO?
 }
 
 /**
@@ -321,36 +222,11 @@ var onicecandidate = function(message) {
 }
 
 /**
- * Store the information of the file and updates the information on the
- * mediafile
- *
- * @event Peer#oninfo
- * @param {Message} message - An info type message containing meta-data about
- *                            the media file the node needs
- */
-var oninfo = function(message) {
-  var info = message.data
-  var url = message.url
-  var from = message.from
-  var media = this.files.get(url)
-
-  media.buildInfoFromRemote(info, from)
-
-  // If the remote peer has parts
-  if(info.available.length > 0) {
-    media.cancelServerDownload()
-  }
-
-  // Start downloading parts
-  this.askForNextParts(media, 3) // TODO Magic Number
-}
-
-/**
  * Extract the SDPOffer from the received message and respond with a SDPAnswer
  *
  * @event Peer#onoffer
  * @param {Message} message - An offer type message containing the remote peer's
- *                            SDPOffer
+ *        SDPOffer
  */
 var onoffer = function(message) {
   var remotePeer = message.from
@@ -386,28 +262,6 @@ var onoffer = function(message) {
 }
 
 /**
- * Message containing a part of the desired media
- *
- * @event Peer#onpart
- * @param {Message} message - A part type message containing a chunk of media
- */
-var onpart = function(message) {
-  console.assert(
-    Array.isArray(message.data),
-    'Message type:part .data is not an array')
-  console.assert(
-    this.files.has(message.url),
-    'Message type:part received for an undesired file')
-
-  // Store the part
-  var media = this.files.get(message.url)
-  // TODO Store parts as pure array ?
-  media.storeChunk(message.number, new Uint8Array(message.data))
-  // Ask for a new part
-  this.askForNextParts(media, 1)
-}
-
-/**
  * The remote peer want our mediafile
  * The node begin the connection
  *
@@ -433,53 +287,4 @@ var onrequestpeer = function(message) {
   peerConnection.createSDPOffer(sendOffer.bind(this, message))
   // Save the new connexion
   this.connections.set(message.from, peerConnection)
-}
-
-// MEDIA LOGIC
-// TODO Move in dedicated file
-/**
- * The remote node request the info of a file (size, number of parts). We return
- * this information and the local parts we have in case he is interested
- *
- * @event Peer#onrequestinfo
- * @param {Message} message - A request for information about a media
- */
-var onrequestinfo = function(message) {
-  if(this.files.has(message.url) &&
-     this.files.get(message.url).info !== undefined) {
-    this.respondTo(message, {
-      type: 'info',
-      data: this.files.get(message.url).info
-    })
-  }
-}
-
-/**
- * The remote peer requests some file part
- * We need to check if we have them and then we can send them
- *
- * @event Peer#onrequestpart
- * @param {Message} message - A request for a chunk of a media
- */
-var onrequestpart = function(message) {
-  var sendChunks = (function(chunk) {
-    //TODO Gotta check
-    // We have to change the Uint8Array in a Array
-    // Should take less space in the message and be easier to parse
-    var data = []
-    for(var i = 0; i < chunk.length; ++i) {
-      data.push(chunk[i])
-    }
-
-    this.respondTo(
-      message, {
-        type: 'part',
-        number: message.number,
-        data: data
-      })
-  }).bind(this)
-
-  this.files.get(message.url)
-    .getChunk(message.number)
-    .then(sendChunks)
 }

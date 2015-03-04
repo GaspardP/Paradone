@@ -1,5 +1,5 @@
 /* @flow weak */
-'use strict';
+'use strict'
 
 var localforage = require('localforage')
 var util = require('./util.js')
@@ -9,10 +9,10 @@ module.exports = Media
 var MediaSource = window.MediaSource || window.WebKitMediaSource
 
 localforage.config({
-  name:'HEA',// DBName
-  storeName:'VID', // datastore or table
-  version:1.0,// Default
-  description:'A test table'
+  name: 'HEA',// DBName
+  storeName: 'VID', // datastore or table
+  version: 1.0,// Default
+  description: 'A test table'
 })
 
 // DEBUG Remove all previous data to enforce peer communication
@@ -22,7 +22,7 @@ localforage.clear()
  * Special wrapping for promise related errors with line number
  *
  * @private
- * @param {Error} e Error object containing detailed information on the error
+ * @param {Error} e - Error object containing detailed information on the error
  */
 var errorHandler = function(e) {
   var linenum = e.lineNumber
@@ -41,14 +41,14 @@ var errorHandler = function(e) {
  * @param sourceTag The tag where the media should be displayed
  *
  * @property {string} url - Source URL of the media. It's used to identify the
- *                          media on the mesh
+ *           media on the mesh
  * @property {HTMLMediaElement} sourceTage - HTML element where hte media will
- *                                           be played
+ *           be played
  * @property {Info} info - Media's meta-data
  * @property {boolean} complete - Indicates if the file is complete or if the
- *                                peer should ask from the missing parts
+ *           peer should ask from the missing parts
  * @property {Array.<number>} pendingParts - Media parts requested but not yet
- *                                           received
+ *           received
  * @property {boolean} [autoload=false] - Automatic play of the media
  */
 function Media(url, sourceTag, autoload) {
@@ -60,12 +60,24 @@ function Media(url, sourceTag, autoload) {
   this.autoload = typeof autoload !== 'undefined' ? autoload : false
 }
 
+/**
+ * Inidiactes how bug should the parts be if the file is splitted locally. We
+ * want a size small enough to be transmitted through the DataChannel packet.
+ * @see https://code.google.com/p/webrtc/issues/detail?id=2270#c35
+ */
 Media.chunkSize = 1000
 
-Media.downloadTimeout = 3000 // Was 8000
+/**
+ * Timeout indicating how long the peer should wait for an answer from remote
+ * peers before it downloads the file from the server. This value can be set
+ * trough the parameter of the "media" extension. The value is in ms and the
+ * default is 5000 (5 seconds)
+ */
+Media.downloadTimeout = 5000
 
 /**
  * Apply function on every locally stored medias
+ *
  * @param {function} forEachStoredMedia - Callback applied to each file
  */
 Media.forEachStoredMedia = function(forEachCallback) {
@@ -99,9 +111,9 @@ Media.forEachStoredMedia = function(forEachCallback) {
  *
  * @param {Object} info - Meta-data associated to the media
  * @param {boolean} autoplay - Flag if media should be played immediatly after
- *                             download
+ *        download
  * @return {Media} Media created from its meta-data. The media is marked as
- *                 completed indicating it should not be requested on the mesh
+ *         completed indicating it should not be requested on the mesh
  */
 Media.createMediaFromInfo = function(info, autoplay) {
   var m = new Media(info.url, null, autoplay)
@@ -234,7 +246,7 @@ Media.prototype.peerHasPart = function(partNumber) {
  * meta-data received through info-request and is not 100% accurate
  *
  * @param {string} remotePeer - Which remote peer should be checked
- * @param {number} partNumber
+ * @param {number} partNumber - Which part should be checked
  * @return {boolean} True if the remote peer seems to possess the part
  */
 Media.prototype.remoteHasPart = function(remotePeer, partNumber) {
@@ -250,7 +262,7 @@ Media.prototype.remoteHasPart = function(remotePeer, partNumber) {
  * Return the result of a XHR as a promise. If the XHR succeed, the resolve
  * function of the promise will have the file requested as first parameter.
  *
- * @param {string} fileUrl
+ * @param {string} fileUrl - url of the file to be downloaded
  * @return {Promise} a new Promise holding the file's URL and ArrayBuffer
  */
 Media.prototype.getRemoteFile = function(fileUrl, responseType) {
@@ -277,8 +289,8 @@ Media.prototype.getRemoteFile = function(fileUrl, responseType) {
  * Store media as splitted elements for easier transmission later
  *
  * @param {number} chunkSize - Max size for a part. Depends on DataChannel's
- *                             limit
- * @param  {ArrayBuffer} fileBuffer - Buffer representing the file
+ *        limit
+ * @param {ArrayBuffer} fileBuffer - Buffer representing the file
  * @return {Promise} a bunch of Promises
  */
 Media.prototype.storeFileBuffer = function(chunkSize, fileBuffer) {

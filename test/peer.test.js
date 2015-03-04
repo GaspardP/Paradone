@@ -4,6 +4,9 @@
 var Peer = require('../src/peer.js')
 var MessageEmitter = require('../src/messageEmitter.js')
 
+window.paradone = window.paradone || {}
+window.paradone.Peer = Peer
+
 describe('Peer', function() {
   this.timeout(5000)
 
@@ -33,7 +36,7 @@ describe('Peer', function() {
       sinon.stub(peerA, 'send', function(message) {
         messages.requestFromA = message
       })
-      peerA.requestSeed(url)
+      peerA.requestPeer(url)
 
       var testParams = [
         ['should be from A', 'from', peerA.id],
