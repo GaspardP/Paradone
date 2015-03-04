@@ -40,23 +40,26 @@ var RTCSessionDescription =
  * @property {Map.<Set.<RTCIceCandidate>>} icecandidates - Store ICECandidates
  *           for a connection if it's not active yet
  */
-function Peer(opts) {
+function Peer(options) {
   if(!(this instanceof Peer)) {
     // Namespace guard
-    return new Peer(opts)
+    return new Peer(options)
   }
 
   MessageEmitter.call(this)
 
   if(typeof opts === 'undefined') {
     console.info('Default parameters used')
-    opts = {}
+    options = {}
   } else {
-    extensions.apply(this, opts.extensions)
+    extensions.apply(this, options.extensions)
+    if(options.hasOwnProperty('peer') &&  options.peer.hasOwnProperty('ttl')) {
+      Peer.ttl = options.peer.ttl
+    }
   }
 
   // Set signaling system
-  var signal = new Signal(this, opts.signal)
+  var signal = new Signal(this, options.signal)
   this.id = signal.getId() // Get id
 
   // Will hold the peers when a connection is created
@@ -70,9 +73,12 @@ function Peer(opts) {
   this.on('answer', onanswer)
   this.on('icecandidate', onicecandidate)
   this.on('request-peer', onrequestpeer)
+
 }
 
 Peer.prototype = Object.create(MessageEmitter.prototype)
+
+Peer.ttl = 3
 
 /**
  * Use the connections to send a message to a remote peer.
@@ -126,29 +132,26 @@ Peer.prototype.send = function(message) {
 
 /**
  * Send a new request for peers to everyone
- * @param {String} url - Id for the file
  */
-Peer.prototype.requestPeer = function(url) {
+Peer.prototype.requestPeer = function() {
   this.send({
     type: 'request-peer',
     from: this.id,
     to: -1,
-    url: url,
     ttl: 3,
     forwardBy: []
   })
 }
 
 /**
- * Extract ids and url information to define an answer message
+ * Extract information to define an answer message
  * @param {Message} message - Original message
  * @param {Object} answer - Values (like data and type) to be sent
  */
 Peer.prototype.respondTo = function(message, answer) {
   answer.from = this.id
   answer.to = message.from
-  answer.url = message.url
-  answer.ttl = 3 //TODO Magic Number !
+  answer.ttl = Peer.ttl
   answer.forwardBy = []
   this.send(answer)
 }

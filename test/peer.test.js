@@ -29,21 +29,19 @@ describe('Peer', function() {
   describe('1-to-1 connection protocol', function() {
     var peerA = new Peer()
     var peerB = new Peer()
-    var url = 'some/url'
     var messages = {}
 
     describe('A should broadcast a peer request', function() {
       sinon.stub(peerA, 'send', function(message) {
         messages.requestFromA = message
       })
-      peerA.requestPeer(url)
+      peerA.requestPeer()
 
       var testParams = [
         ['should be from A', 'from', peerA.id],
         ['should be for everyone', 'to', -1],
         ['should be a request', 'type', 'request-peer'],
         ['should not been forwarded', 'forwardBy', []],
-        ['should have the correct url', 'url', url],
         ['should have default ttl', 'ttl', 3]
       ]
 
@@ -196,7 +194,6 @@ describe('Peer', function() {
     describe('A sends messages on the mesh', function() {
 
       var peers = {}
-      var url = 'multi/peers'
 
       before(function(done) {
         var peerA = peers.A = new Peer()
@@ -214,7 +211,6 @@ describe('Peer', function() {
           type: 'request-peer',
           from: peerB.id,
           to: -1,
-          url: url,
           ttl: 3,
           forwardBy: []
         }
@@ -257,7 +253,6 @@ describe('Peer', function() {
           data: 'AtoB',
           ttl: 3,
           forwardBy: [],
-          url: ''
         })
       })
 
@@ -274,7 +269,6 @@ describe('Peer', function() {
           data: 'AtoC',
           ttl: 3,
           forwardBy: [],
-          url: ''
         })
       })
     })
@@ -285,7 +279,6 @@ describe('Peer', function() {
       var peerA = peers.A = new Peer()
       var peerB = peers.B = new Peer()
       var peerC = peers.C = new Peer()
-      var url = 'something'
 
       // Connect A to B and send request from C to both
       before(function(done) {
@@ -300,7 +293,6 @@ describe('Peer', function() {
           type: 'request-peer',
           from: peerB.id,
           to: -1,
-          url: url,
           ttl: 3,
           forwardBy: []
         }
@@ -308,7 +300,6 @@ describe('Peer', function() {
           type: 'request-peer',
           from: peerC.id,
           to: -1,
-          url: url,
           ttl: 3,
           forwardBy: []
         }

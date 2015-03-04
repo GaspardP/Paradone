@@ -66,12 +66,12 @@ window.paradone = module.exports
  * @property {string} from - id of the sender
  * @property {string} to - id of the recipient (-1 for broadcast)
  * @property {number} ttl - "time to live", maximum number of forwarding
- * @property {Object} data - Data of the message
  * @property {Array.<string>} forwardBy - Id of peers which already have
- *                                        forwarded the message
- * @property {string} url - URL of the desired media
+ *           forwarded the message
+ * @property {Object} [data] - Data of the message (media extension related)
+ * @property {string} [url] - URL of the desired media
  * @property {number} [number] - Number of the part transmitted in
- *                               `request-part` and `part` messages
+ *           `request-part` and `part` messages
  */
 
 /**

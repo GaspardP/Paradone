@@ -144,7 +144,6 @@ function PeerConnection(peer, remotePeer) {
       type: 'icecandidate',
       from: id,
       to: remotePeer,
-      url: '', //TODO Send url or remove message guard in peer
       ttl: 3,
       data: event.candidate,
       forwardBy: []
