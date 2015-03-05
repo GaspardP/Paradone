@@ -1,5 +1,23 @@
+/*
+ * Copyright 2015 Paradone
+ *
+ * This file is part of Paradone <https://paradone.github.io>
+ *
+ * Paradone is free software: you can redistribute it and/or modify it under
+ * the terms of the GNU Affero General Public License as published by the
+ * Free Software Foundation, either version 3 of the License, or (at your
+ * option) any later version.
+ *
+ * Paradone is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Affero General Public
+ * License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with Paradone.  If not, see <http://www.gnu.org/licenses/>.
+ */
 /* @flow weak */
-'use strict';
+'use strict'
 
 /**
  * Wrapper setting handlers of a RTCDatachannel from a given PeerConnection
@@ -20,7 +38,7 @@ module.exports = {
    *
    * @param {Peer} peer - Events will be forwarded to this Peer
    * @param {PeerConnection} peerConnection - PeerConnection where the
-   *                                          DataChannel will be stored
+   *        DataChannel will be stored
    * @param {string} id - Id of the remote peer
    *
    * @return DataChannel
@@ -37,9 +55,9 @@ module.exports = {
    * @param {RTCDataChannel} channel - Channel to be configured
    * @param {Peer} peer - Events must be forwarded to this Peer
    * @param {PeerConnection} peerConnection - PeerConnection where the
-   *                                          DataChannel will be stored
+   *        DataChannel will be stored
    * @param {string} id - Id of the remote peer
-   * @return DataChannel
+   * @return {DataChannel}
    */
   setHandlers: function(channel, peer, peerConnection, remotePeer) {
     channel.onmessage = this.onmessage.bind(null, peer)

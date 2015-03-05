@@ -1,5 +1,23 @@
+/*
+ * Copyright 2015 Paradone
+ *
+ * This file is part of Paradone <https://paradone.github.io>
+ *
+ * Paradone is free software: you can redistribute it and/or modify it under
+ * the terms of the GNU Affero General Public License as published by the
+ * Free Software Foundation, either version 3 of the License, or (at your
+ * option) any later version.
+ *
+ * Paradone is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Affero General Public
+ * License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with Paradone.  If not, see <http://www.gnu.org/licenses/>.
+ */
 /* @flow weak */
-'use strict';
+'use strict'
 
 var Media = require('./media.js')
 var Peer = require('./peer.js')
@@ -10,8 +28,6 @@ var Signal = require('./signal.js')
  * Find every video tag and start downloading and sharing them through the mesh
  *
  * @param {Object} opts
- *   1. Signaling server
- *   2. Turn/Stun server
  */
 var start = function(opts) {
   document.addEventListener('DOMContentLoaded', function() {

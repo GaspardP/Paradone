@@ -1,5 +1,23 @@
+/*
+ * Copyright 2015 Paradone
+ *
+ * This file is part of Paradone <https://paradone.github.io>
+ *
+ * Paradone is free software: you can redistribute it and/or modify it under
+ * the terms of the GNU Affero General Public License as published by the
+ * Free Software Foundation, either version 3 of the License, or (at your
+ * option) any later version.
+ *
+ * Paradone is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Affero General Public
+ * License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with Paradone.  If not, see <http://www.gnu.org/licenses/>.
+ */
 /* @flow weak */
-'use strict';
+'use strict'
 
 var dataChannel = require('./dataChannel.js')
 var util = require('./util.js')
@@ -80,7 +98,7 @@ function PeerConnection(peer, remotePeer) {
    *
    * @function PeerConnection#createSDPOffer
    * @param {function} sendOffer - Use the signaling server to transmit the
-   *                               offer to the remote Peer
+   *        offer to the remote Peer
    */
   pc.createSDPOffer = function(sendOffer) {
     // TODO Use generators when available
@@ -97,7 +115,7 @@ function PeerConnection(peer, remotePeer) {
    * @function PeerConnection#createSDPAnswer
    * @param {string} remoteSDP - Id of the remote peer
    * @param {function} sendAnswer - callback used to send the SDPAnswer. Use
-   *                                the signaling system to transmit it
+   *        the signaling system to transmit it
    */
   pc.createSDPAnswer = function(remoteSDP, sendAnswer) {
     // TODO Use generator when available
@@ -133,8 +151,7 @@ function PeerConnection(peer, remotePeer) {
    *
    * @private
    * @event PeerConnection#onicecandidate
-   * @param {Event} event - Object containing the candidate when the callback is
-   *                        fired
+   * @param {Event} event - Contains the candidate when the callback is fired
    */
   pc.onicecandidate = function(event) {
     if(null === event.candidate) {

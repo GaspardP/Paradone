@@ -1,7 +1,7 @@
 /*
  * Copyright 2015 Paradone
  *
- * This file is part of Paradone.
+ * This file is part of Paradone <https://paradone.github.io>
  *
  * Paradone is free software: you can redistribute it and/or modify it under
  * the terms of the GNU Affero General Public License as published by the
@@ -17,7 +17,7 @@
  * along with Paradone.  If not, see <http://www.gnu.org/licenses/>.
  */
 /* @flow */
-'use strict';
+'use strict'
 
 module.exports = MessageEmitter
 
