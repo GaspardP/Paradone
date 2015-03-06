@@ -1,4 +1,4 @@
-/*
+/*!
  * Copyright 2015 Paradone
  *
  * This file is part of Paradone <https://paradone.github.io>

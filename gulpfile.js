@@ -33,7 +33,7 @@ gulp.task('build', function() {
   }).bundle()
     .pipe(source(destFile))
     .pipe(buffer())
-    .pipe(uglify())
+    .pipe(uglify({preserveComments: 'some'}))
     .pipe(gulp.dest(destPath))
 })
 
