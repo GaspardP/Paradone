@@ -191,10 +191,9 @@ module.exports = (function() {
   }
 
   /**
-   * @mixin A media peer implements the functions used to share and retrieve
-   *        media files on the mesh
-   *
-   * @constructor
+   * @mixin MediaPeer
+   * @description A media peer implements the functions used to share and
+   *              retrieve media files on the mesh
    * @property {Media} files - Map of files indexed by url
    */
   return function MediaPeer(parameters) {

@@ -7,9 +7,9 @@
   "main": "src/main.js",
   "scripts": {
     "build": "./node_modules/.bin/gulp build",
-    "clean": "find . -type f -name \"#*#\" -o -name \"*~\" -delete;",
+    "clean": "find . -type f -name \"#*#\" -o -name \"*~\" -delete; rm -r ./dist ./doc",
     "debug": "./node_modules/.bin/gulp debug",
-    "doc": "./node_modules/.bin/jsdoc -P ./package.json -d ./doc src/*.js",
+    "doc": "./node_modules/.bin/jsdoc -P ./package.json -d ./doc -r ./src",
     "test": "./node_modules/.bin/gulp test",
     "watch": "./node_modules/.bin/gulp watch"
   },
