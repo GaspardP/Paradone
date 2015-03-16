@@ -50,7 +50,7 @@ var RTCSessionDescription =
  *        the `on`function and send messages with the `emit` function.
  *
  * @constructor
- * @param {Object} [opts] - Configuration options
+ * @param {Object} [options] - Configuration options
  *
  * @property {string} id - Id of the peer
  * @property {Map.<PeerConnection>} connections - Connections indexed by remote
@@ -66,7 +66,7 @@ function Peer(options) {
 
   MessageEmitter.call(this)
 
-  if(typeof opts === 'undefined') {
+  if(typeof options === 'undefined') {
     console.info('Default parameters used')
     options = {}
   } else {

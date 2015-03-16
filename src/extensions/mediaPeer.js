@@ -155,7 +155,8 @@ module.exports = (function() {
        this.files.get(message.url).info !== undefined) {
       this.respondTo(message, {
         type: 'info',
-        data: this.files.get(message.url).info
+        data: this.files.get(message.url).info,
+        url: message.url
       })
     }
   }
@@ -181,7 +182,8 @@ module.exports = (function() {
         message, {
           type: 'part',
           number: message.number,
-          data: data
+          data: data,
+          url: message.url
         })
     }).bind(this)
 
